@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>每日動腦小遊戲</title>
+<style>
+:root{color-scheme:light;--bg:#f1eee8;--card:#faf8f4;--tx:#2f2a33;--mu:#7b7580;--ac:#7c5cbf;--ln:#e0dbd1;--btn:#e4d9f6;--btn2:#c8b4ee;--ok:#2f9e6b;--bad:#e5484d;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.6}
+main{max-width:640px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.5rem;margin:.2em 0}
+.sub{color:var(--mu);margin:0 0 16px;font-size:.92rem}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:16px;padding:18px;margin-bottom:14px}
+.seg{display:flex;gap:8px;margin-bottom:14px}
+.seg button,.btn{font:inherit;border:1px solid var(--ln);background:#fff;color:var(--tx);border-radius:999px;padding:8px 16px;cursor:pointer}
+.seg button.on,.btn.pri{background:var(--btn);border-color:var(--btn2);color:#2f2a33;font-weight:600}
+.tag{display:inline-block;font-size:.78rem;color:var(--ac);border:1px solid var(--ac);border-radius:999px;padding:0 10px;margin-right:6px}
+.big{font-size:2.6rem;line-height:1}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.grid{display:grid;gap:6px;margin-top:12px}
+.cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--bg);border:1px solid var(--ln);border-radius:10px;font-size:1.7rem;cursor:pointer;user-select:none}
+.opt{flex:1 1 40%;font-size:1.1rem}
+.word{font-size:3.4rem;font-weight:700;text-align:center;margin:18px 0}
+.pad{aspect-ratio:1.4;border-radius:14px;border:0;opacity:.45;cursor:pointer}
+.pad.lit{opacity:1;filter:brightness(1.25)}
+.msg{margin-top:12px;font-weight:600}
+.small{font-size:.85rem;color:var(--mu)}
+</style>
+</head>
+<body>
+<main>
+<h1>🧠 每日動腦小遊戲</h1>
+<p class="sub" id="date"></p>
+<div class="seg" id="seg">
+  <button data-a="kid">🧒 兒童</button><button data-a="adult">🧑 成人</button>
+</div>
+<div class="card" id="intro"></div>
+<div class="card" id="stage"></div>
+<div class="row" style="margin-top:0">
+  <button class="btn" id="again">🎲 再來一個</button>
+  <button class="btn" id="today">📅 回到今日推薦</button>
+</div>
+<p class="small" id="streak" style="margin-top:14px"></p>
+<p class="small">這些活動僅供休閒與練習，不能取代專業評估。</p>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const sh=a=>[...a].sort(()=>Math.random()-.5);
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+let timers=[];const later=(f,t)=>timers.push(setTimeout(f,t));
+const stage=()=>$('#stage');
+
+/* ---------- 遊戲 ---------- */
+function stroop(done){
+  const C=[['紅','#e5484d'],['藍','#3b82f6'],['綠','#30a46c'],['黃','#e0a800']];let n=0,ok=0;
+  (function next(){
+    if(n==8)return done(`答對 ${ok} / 8`);
+    const w=C[ri(0,3)],c=sh(C.filter(x=>x!=w))[0];n++;
+    stage().innerHTML=`<span class="tag">視知覺 · 專注</span>點選「字的顏色」，不是字的意思<div class="word" style="color:${c[1]}">${w[0]}</div>
+    <div class="row">${C.map((x,i)=>`<button class="btn opt" data-i="${i}">${x[0]}色</button>`).join('')}</div><p class="small">第 ${n} / 8 題</p>`;
+    stage().querySelectorAll('.opt').forEach(b=>b.onclick=()=>{if(C[b.dataset.i]==c)ok++;next()});
+  })();
+}
+function odd(done){
+  const P=[['🍎','🍅'],['🐶','🐺'],['🕐','🕑'],['😀','😃'],['🌞','🌝'],['🐱','🐯']];let r=0;
+  (function next(){
+    if(r==5)return done('5 關全過，眼力很棒！');
+    const n=3+r,p=sh(P)[0],o=ri(0,n*n-1);r++;
+    stage().innerHTML=`<span class="tag">視知覺 · 找不同</span>找出那個不一樣的（第 ${r} / 5 關）
+    <div class="grid" style="grid-template-columns:repeat(${n},1fr)">${Array.from({length:n*n},(_,i)=>`<div class="cell" data-i="${i}">${i==o?p[1]:p[0]}</div>`).join('')}</div>`;
+    stage().querySelectorAll('.cell').forEach(c=>c.onclick=()=>{
+      if(+c.dataset.i==o)next();else{c.style.background='var(--bad)';later(()=>c.style.background='',300)}});
+  })();
+}
+function memory(done){
+  const np=aud=='kid'?6:10,cols=aud=='kid'?4:5;
+  const E=sh(['🐘','🦊','🐸','🐼','🦄','🐙','🍉','🚀','🍓','🐳']).slice(0,np);let cards=sh([...E,...E]),open=[],moves=0,found=0,lock=false;
+  stage().innerHTML=`<span class="tag">工作記憶 · 翻牌</span>找出所有成對的圖案<div class="grid" style="grid-template-columns:repeat(${cols},1fr)" id="g"></div><p class="small" id="mv">步數：0</p>`;
+  const g=$('#g');
+  cards.forEach((e,i)=>{const d=document.createElement('div');d.className='cell';d.textContent='❓';
+    d.onclick=()=>{if(lock||d.dataset.f)return;d.textContent=e;open.push([d,e]);
+      if(open.length==2){moves++;$('#mv').textContent='步數：'+moves;lock=true;
+        const[[a,x],[b,y]]=open;
+        if(x==y){a.dataset.f=b.dataset.f=1;found++;open=[];lock=false;if(found==np)done(`用了 ${moves} 步完成`)}
+        else later(()=>{a.textContent=b.textContent='❓';open=[];lock=false},700)}};
+    g.appendChild(d)});
+}
+function seqnum(done){
+  let r=0,ok=0;
+  (function next(){
+    if(r==5)return done(`答對 ${ok} / 5`);r++;
+    const t=ri(0,3),a=ri(1,9),d=ri(2,6);let s;
+    if(t==0)s=[0,1,2,3,4].map(k=>a+d*k);
+    else if(t==1)s=[0,1,2,3,4].map(k=>a*Math.pow(2,k));
+    else if(t==2){s=[a,d];for(let k=0;k<3;k++)s.push(s[k]+s[k+1])}
+    else s=[1,2,3,4,5].map(k=>k*k+a);
+    const ans=s.pop();let O=new Set([ans]);while(O.size<4)O.add(ans+ri(-6,6)||ans+7);
+    stage().innerHTML=`<span class="tag">邏輯推理 · 數列</span>下一個數字是？<div class="word">${s.join('、')}、？</div>
+    <div class="row">${sh([...O]).map(v=>`<button class="btn opt" data-v="${v}">${v}</button>`).join('')}</div><p class="small">第 ${r} / 5 題</p>`;
+    stage().querySelectorAll('.opt').forEach(b=>b.onclick=()=>{if(+b.dataset.v==ans)ok++;next()});
+  })();
+}
+function seqcolor(done){
+  const K=['🔴','🟡','🟢','🔵','🟣'];let r=0,ok=0;
+  (function next(){
+    if(r==5)return done(`答對 ${ok} / 5`);r++;
+    const L=ri(2,3);let u;do{u=Array.from({length:L},()=>K[ri(0,4)])}while(new Set(u).size<2);
+    const full=[...u,...u,...u],shown=full.slice(0,2*L+L-1),ans=full[2*L+L-1];
+    const O=new Set([ans]);while(O.size<4)O.add(K[ri(0,4)]);
+    stage().innerHTML=`<span class="tag">邏輯推理 · 顏色規律</span>接下來會是什麼顏色？<div class="word" style="font-size:2.4rem;letter-spacing:4px">${shown.join('')}❓</div>
+    <div class="row">${sh([...O]).map(v=>`<button class="btn opt" data-v="${v}" style="font-size:2rem">${v}</button>`).join('')}</div><p class="small">第 ${r} / 5 題</p>`;
+    stage().querySelectorAll('.opt').forEach(b=>b.onclick=()=>{if(b.dataset.v==ans)ok++;next()});
+  })();
+}
+function simon(done){
+  const col=['#e5484d','#3b82f6','#30a46c','#e0a800'];let seq=[],pos=0,busy=true;
+  stage().innerHTML=`<span class="tag">短期記憶 · 順序</span>看亮燈順序，再照樣點一次<div class="grid" style="grid-template-columns:1fr 1fr">${col.map((c,i)=>`<button class="pad" data-i="${i}" style="background:${c}"></button>`).join('')}</div><p class="msg" id="m"></p>`;
+  const pads=[...stage().querySelectorAll('.pad')];
+  const flash=i=>{pads[i].classList.add('lit');later(()=>pads[i].classList.remove('lit'),350)};
+  function play(){busy=true;pos=0;seq.push(ri(0,3));$('#m').textContent=`第 ${seq.length} 回合，請看…`;
+    seq.forEach((s,k)=>later(()=>flash(s),600+k*600));later(()=>{busy=false;$('#m').textContent='換你了！'},600+seq.length*600)}
+  pads.forEach(p=>p.onclick=()=>{if(busy)return;const i=+p.dataset.i;flash(i);
+    if(i!=seq[pos])return done(`記住了 ${seq.length-1} 個順序`);
+    if(++pos==seq.length)later(play,700)});
+  play();
+}
+function ground(done){
+  const S=[['5','看看四周，說出 5 樣你看得到的東西'],['4','摸摸看，找出 4 樣你能碰到的東西'],['3','安靜聽，說出 3 種你聽到的聲音'],['2','聞一聞，找出 2 種氣味'],['1','慢慢吸一口氣，說出 1 件今天讓你開心的事']];let i=0;
+  (function next(){
+    if(i==5)return done('做得很好，慢慢呼吸 🌿');
+    stage().innerHTML=`<span class="tag">放鬆 · 覺察</span><div class="word">${S[i][0]}</div><p style="text-align:center">${S[i][1]}</p><div class="row"><button class="btn pri" id="nx">完成，下一步</button></div>`;
+    $('#nx').onclick=()=>{i++;next()};
+  })();
+}
+
+const G=[
+ {n:'顏色與字義',e:'🎨',a:['kid','adult'],d:'經典 Stroop 練習，訓練注意力與抑制衝動。',f:stroop},
+ {n:'找不同',e:'🔍',a:['kid','adult'],d:'在一堆相似圖案中找出唯一不同的一個。',f:odd},
+ {n:'記憶翻牌',e:'🃏',a:['kid','adult'],d:'翻開兩張，找出成對圖案，練習工作記憶。（兒童 12 張、成人 20 張）',f:memory},
+ {n:'數列推理',e:'🔢',a:['kid','adult'],d:'觀察規律，推出下一個。成人是數字數列，兒童是顏色規律。',f:d=>aud=='kid'?seqcolor(d):seqnum(d)},
+ {n:'順序記憶',e:'💡',a:['kid','adult'],d:'記住越來越長的亮燈順序。',f:simon},
+ {n:'5-4-3-2-1 覺察',e:'🌿',a:['kid','adult'],d:'用五感把注意力帶回當下的小練習。',f:ground}
+];
+
+/* ---------- 流程 ---------- */
+let aud=store.get('aud')||'kid';
+const now=new Date(),key=now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
+$('#date').textContent=now.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'})+' · 每天一個新活動';
+const pool=()=>G.filter(g=>g.a.includes(aud));
+function dailyIdx(){let h=0;for(const c of key+aud)h=(h*31+c.charCodeAt(0))>>>0;return h%pool().length}
+function load(g,isDaily){
+  timers.forEach(clearTimeout);timers=[];
+  $('#intro').innerHTML=`<div class="big">${g.e}</div><h2 style="margin:.3em 0">${g.n}</h2><p class="sub" style="margin:0">${isDaily?'<span class="tag">今日推薦</span>':''}${g.d}</p><div class="row"><button class="btn pri" id="go">開始</button></div>`;
+  stage().innerHTML='<p class="small" style="margin:0">按「開始」進入活動。</p>';
+  $('#go').onclick=()=>g.f(res=>{stage().innerHTML=`<div class="big">🎉</div><p class="msg">${res}</p>`;
+    if(isDaily&&store.get('done')!=key){store.set('done',key);const p=+store.get('cnt')||0;store.set('cnt',p+1)}showStreak()});
+}
+function showStreak(){const c=+store.get('cnt')||0;$('#streak').textContent=c?`🌟 你已完成 ${c} 次每日活動${store.get('done')==key?'（今天已完成）':''}`:''}
+function setAud(a){aud=a;store.set('aud',a);document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.a==a));load(pool()[dailyIdx()],true)}
+document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>setAud(b.dataset.a));
+$('#again').onclick=()=>load(sh(pool())[0],false);
+$('#today').onclick=()=>load(pool()[dailyIdx()],true);
+setAud(aud);showStreak();
+</script>
+</body>
+</html>
