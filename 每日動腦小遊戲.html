@@ -129,7 +129,7 @@ function seqcolor(done){
 }
 function simon(done){
   const col=['#e5484d','#3b82f6','#30a46c','#e0a800'];let seq=[],pos=0,busy=true;
-  stage().innerHTML=`<span class="tag">短期記憶 · 順序</span>看亮燈順序，再照樣點一次<div class="grid" style="grid-template-columns:1fr 1fr">${col.map((c,i)=>`<button class="pad" data-i="${i}" style="background:${c}"></button>`).join('')}</div><p class="msg" id="m"></p>`;
+  stage().innerHTML=`<span class="tag">短期記憶 · 順序</span>看亮燈順序，再照樣點一次<div class="grid" style="grid-template-columns:1fr 1fr;max-width:260px;margin:12px auto 0">${col.map((c,i)=>`<button class="pad" data-i="${i}" style="background:${c}"></button>`).join('')}</div><p class="msg" id="m"></p>`;
   const pads=[...stage().querySelectorAll('.pad')];
   const flash=i=>{pads[i].classList.add('lit');later(()=>pads[i].classList.remove('lit'),350)};
   function play(){busy=true;pos=0;seq.push(ri(0,3));$('#m').textContent=`第 ${seq.length} 回合，請看…`;
