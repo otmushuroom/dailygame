@@ -58,20 +58,31 @@ const stage=()=>$('#stage');
 function stroop(done){
   const C=[['紅','#e5484d'],['藍','#3b82f6'],['綠','#30a46c'],['黃','#e0a800']];let n=0,ok=0;
   (function next(){
-    if(n==8)return done(`答對 ${ok} / 8`);
+    if(n==10)return done(`答對 ${ok} / 10`);
     const w=C[ri(0,3)],c=sh(C.filter(x=>x!=w))[0];n++;
     stage().innerHTML=`<span class="tag">視知覺 · 專注</span>點選「字的顏色」，不是字的意思<div class="word" style="color:${c[1]}">${w[0]}</div>
-    <div class="row">${C.map((x,i)=>`<button class="btn opt" data-i="${i}">${x[0]}色</button>`).join('')}</div><p class="small">第 ${n} / 8 題</p>`;
+    <div class="row">${C.map((x,i)=>`<button class="btn opt" data-i="${i}">${x[0]}色</button>`).join('')}</div><p class="small">第 ${n} / 10 題</p>`;
     stage().querySelectorAll('.opt').forEach(b=>b.onclick=()=>{if(C[b.dataset.i]==c)ok++;next()});
   })();
 }
+function oddSet(t,r){
+  const pk=a=>sh(a)[0];
+  if(t==0){const p=pk([['🍎','🍅'],['🐶','🐺'],['🕐','🕑'],['😀','😃'],['🌞','🌝'],['🐱','🐯'],['🍊','🍑'],['🐭','🐹'],['🍓','🍒'],['🐵','🙈'],['🦆','🐤'],['😐','😑'],['🙂','🙃'],['🌼','🌻'],['🍇','🫐'],['🌕','🌖']]);return{l:'相似圖案',a:p[0],b:p[1]}}
+  if(t==1){const E=[['日','曰'],['土','士'],['人','入'],['大','太'],['天','夫'],['白','自']],H=[['己','已'],['未','末'],['戊','戌'],['干','于'],['田','由']];const p=pk(aud=='kid'?E:E.concat(H));return{l:'相似的字',a:p[0],b:p[1]}}
+  if(t==2){const p=pk([['b','d'],['p','q'],['6','9'],['m','w'],['O','Q'],['E','F'],['1','7'],['M','N'],['u','n'],['3','8']]);return{l:'字母與數字',a:p[0],b:p[1]}}
+  if(t==3){const e=pk(['🐟','🚗','🐢','🦆','👞','🐌','🚲','✈️','🐘']);return{l:'左右方向',a:e,b:`<span style="display:inline-block;transform:scaleX(-1)">${e}</span>`}}
+  if(t==5){const e=pk(['🏠','🐢','🚗','🐘','🐟','👞','🍎','🚲']);return{l:'上下顛倒',a:e,b:`<span style="display:inline-block;transform:rotate(180deg)">${e}</span>`}}
+  if(t==6){const e=pk(['🍎','🐢','🚗','🏠','🐘','🌳','🐟','🍉','🦆']),ps=['inset(0 50% 0 0)','inset(0 0 50% 0)','inset(0 0 0 50%)','polygon(0 0,55% 0,55% 45%,100% 45%,100% 100%,0 100%)','polygon(45% 0,100% 0,100% 100%,0 100%,0 45%,45% 45%)'];
+    return{l:'缺角或剩一半',a:e,b:`<span style="display:inline-block;clip-path:${pk(ps)}">${e}</span>`}}
+  const h=ri(0,359),d=aud=='kid'?Math.max(13,26-r*3):Math.max(7,20-r*3);const c=l=>`<span style="color:hsl(${h},65%,${l}%);font-size:2rem">●</span>`;return{l:'顏色深淺',a:c(55),b:c(55+d)}
+}
 function odd(done){
-  const P=[['🍎','🍅'],['🐶','🐺'],['🕐','🕑'],['😀','😃'],['🌞','🌝'],['🐱','🐯']];let r=0;
+  const B=aud=='kid'?[0,3,4,5,6]:[0,1,2,3,4,5,6],T=sh(B).concat(sh(B)).slice(0,10);let r=0;
   (function next(){
-    if(r==5)return done('5 關全過，眼力很棒！');
-    const n=3+r,p=sh(P)[0],o=ri(0,n*n-1);r++;
-    stage().innerHTML=`<span class="tag">視知覺 · 找不同</span>找出那個不一樣的（第 ${r} / 5 關）
-    <div class="grid" style="grid-template-columns:repeat(${n},1fr)">${Array.from({length:n*n},(_,i)=>`<div class="cell" data-i="${i}">${i==o?p[1]:p[0]}</div>`).join('')}</div>`;
+    if(r==10)return done('10 關全過，眼力很棒！');
+    const n=3+Math.min(Math.floor(r/3),3),it=oddSet(T[r],Math.floor(r/2)),o=ri(0,n*n-1);r++;
+    stage().innerHTML=`<span class="tag">視知覺 · 找不同</span><span class="tag">${it.l}</span> 找出不一樣的（第 ${r} / 10 關）
+    <div class="grid" style="grid-template-columns:repeat(${n},1fr)">${Array.from({length:n*n},(_,i)=>`<div class="cell" data-i="${i}">${i==o?it.b:it.a}</div>`).join('')}</div>`;
     stage().querySelectorAll('.cell').forEach(c=>c.onclick=()=>{
       if(+c.dataset.i==o)next();else{c.style.background='var(--bad)';later(()=>c.style.background='',300)}});
   })();
@@ -92,7 +103,7 @@ function memory(done){
 function seqnum(done){
   let r=0,ok=0;
   (function next(){
-    if(r==5)return done(`答對 ${ok} / 5`);r++;
+    if(r==10)return done(`答對 ${ok} / 10`);r++;
     const t=ri(0,3),a=ri(1,9),d=ri(2,6);let s;
     if(t==0)s=[0,1,2,3,4].map(k=>a+d*k);
     else if(t==1)s=[0,1,2,3,4].map(k=>a*Math.pow(2,k));
@@ -100,19 +111,19 @@ function seqnum(done){
     else s=[1,2,3,4,5].map(k=>k*k+a);
     const ans=s.pop();let O=new Set([ans]);while(O.size<4)O.add(ans+ri(-6,6)||ans+7);
     stage().innerHTML=`<span class="tag">邏輯推理 · 數列</span>下一個數字是？<div class="word">${s.join('、')}、？</div>
-    <div class="row">${sh([...O]).map(v=>`<button class="btn opt" data-v="${v}">${v}</button>`).join('')}</div><p class="small">第 ${r} / 5 題</p>`;
+    <div class="row">${sh([...O]).map(v=>`<button class="btn opt" data-v="${v}">${v}</button>`).join('')}</div><p class="small">第 ${r} / 10 題</p>`;
     stage().querySelectorAll('.opt').forEach(b=>b.onclick=()=>{if(+b.dataset.v==ans)ok++;next()});
   })();
 }
 function seqcolor(done){
   const K=['🔴','🟡','🟢','🔵','🟣'];let r=0,ok=0;
   (function next(){
-    if(r==5)return done(`答對 ${ok} / 5`);r++;
+    if(r==10)return done(`答對 ${ok} / 10`);r++;
     const L=ri(2,3);let u;do{u=Array.from({length:L},()=>K[ri(0,4)])}while(new Set(u).size<2);
     const full=[...u,...u,...u],shown=full.slice(0,2*L+L-1),ans=full[2*L+L-1];
     const O=new Set([ans]);while(O.size<4)O.add(K[ri(0,4)]);
     stage().innerHTML=`<span class="tag">邏輯推理 · 顏色規律</span>接下來會是什麼顏色？<div class="word" style="font-size:2.4rem;letter-spacing:4px">${shown.join('')}❓</div>
-    <div class="row">${sh([...O]).map(v=>`<button class="btn opt" data-v="${v}" style="font-size:2rem">${v}</button>`).join('')}</div><p class="small">第 ${r} / 5 題</p>`;
+    <div class="row">${sh([...O]).map(v=>`<button class="btn opt" data-v="${v}" style="font-size:2rem">${v}</button>`).join('')}</div><p class="small">第 ${r} / 10 題</p>`;
     stage().querySelectorAll('.opt').forEach(b=>b.onclick=()=>{if(b.dataset.v==ans)ok++;next()});
   })();
 }
@@ -139,7 +150,7 @@ function ground(done){
 
 const G=[
  {n:'顏色與字義',e:'🎨',a:['kid','adult'],d:'經典 Stroop 練習，訓練注意力與抑制衝動。',f:stroop},
- {n:'找不同',e:'🔍',a:['kid','adult'],d:'在一堆相似圖案中找出唯一不同的一個。',f:odd},
+ {n:'找不同',e:'🔍',a:['kid','adult'],d:'找出唯一不同的一個：相似圖案、翻轉、缺角、顏色深淺（成人另有文字題）。',f:odd},
  {n:'記憶翻牌',e:'🃏',a:['kid','adult'],d:'翻開兩張，找出成對圖案，練習工作記憶。（兒童 12 張、成人 20 張）',f:memory},
  {n:'數列推理',e:'🔢',a:['kid','adult'],d:'觀察規律，推出下一個。成人是數字數列，兒童是顏色規律。',f:d=>aud=='kid'?seqcolor(d):seqnum(d)},
  {n:'順序記憶',e:'💡',a:['kid','adult'],d:'記住越來越長的亮燈順序。',f:simon},
